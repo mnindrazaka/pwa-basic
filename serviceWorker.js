@@ -17,9 +17,27 @@ const assets = [
 
 self.addEventListener("install", (installEvent) => {
   installEvent.waitUntil(
-    caches.open(staticDevCoffee).then((cache) => {
-      cache.addAll(assets);
-    })
+    caches
+      .open(staticDevCoffee)
+      .then((cache) => cache.addAll(assets))
+      .then(self.skipWaiting())
+  );
+});
+
+self.addEventListener("active", (event) => {
+  const currentCaches = [staticDevCoffee];
+  event.waitUntil(
+    caches
+      .keys()
+      .then((cacheNames) =>
+        cacheNames.filter((cacheName) => !currentCaches.includes(cacheName))
+      )
+      .then((cachesToDelete) =>
+        Promise.all(
+          cachesToDelete.map((cacheToDelete) => caches.delete(cacheToDelete))
+        )
+      )
+      .then(self.clients.claim())
   );
 });
 
